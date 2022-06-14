@@ -1,0 +1,47 @@
+#!/bin/bash
+
+ROOT_UID=0 # Только пользователь с $UID 0 имеет привилегии root.
+E_NOTROOT=67 # Признак отсутствия root-привилегий.
+E_FILE_NOT_EXIST=71
+E_NOFILE=66
+
+if [ "$UID" -ne "$ROOT_UID" ]
+then
+ echo "Для работы сценария требуются права root."
+ exit $E_NOTROOT
+fi
+ # Проверка наличия необходимых программ
+command -v mdadm >/dev/null 2>&1 || { echo >&2 "I require mdadm but it's not installed.  Aborting."; exit 1; }
+command -v parted >/dev/null 2>&1 || { echo >&2 "I require parted but it's not installed.  Aborting."; exit 1; }
+command -v rsync >/dev/null 2>&1 || { echo >&2 "I require rsync but it's not installed.  Aborting."; exit 1; }
+# command -v foo >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
+
+echo "Root - права получены"
+echo "Все программы установлены (mdadm, parted, rsync)"
+
+PS3='Выберите ваш системный диск: ' # строка приглашения к вводу (prompt)
+echo
+select vegetable in lsblk
+do
+ echo
+ echo "Вы предпочитаете $vegetable."
+ echo ";-))"
+ echo
+ break # если 'break' убрать, то получится бесконечный цикл.
+done
+
+
+
+echo "Введите диск, на котором стоит система"
+read default_disk
+
+if [ ! -f "$default_disk" ] # Проверка существования файла.
+then
+ echo "Файл \"$default_disk\" не найден."
+ exit $E_NOFILE
+fi
+echo "Домашний диск определен - \"$default_disk\""
+
+#def_disk = $1
+#disk1 = $2
+#disk2 = $3
