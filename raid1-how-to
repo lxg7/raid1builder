@@ -1,0 +1,58 @@
+lsblk
+
+# ставим нужные программы
+sudo apt-get update && sudo apt-get install mdadm rsync
+
+# создаем новые разделы на новых дисках
+=====x2
+sudo fdisk /dev/sdb
+p (убедимся что диск пуст)
+n (создаем новый раздел)
+p (тип: первичный)
+1 (номер партиции)
+[Enter]
+[Enter] (все пространство под наш новый раздел)
+t (тип раздела)
+fd (Linux raid auto)
+w (записываем изменения и выходим)
+============
+==аналог==
+sudo parted -s /dev/sdb mklabel msdos
+sudo parted -s /dev/sdb mkpart primary 1MiB 100%
+sudo parted -s /dev/sdb set 1 raid on
+============
+
+#создание raid1 + перенос старой разметки диска
+sudo mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb1 /dev/sdc1
+sudo mdadm -D /dev/md0
+sudo su
+sudo mdadm --examine --scan >> /etc/mdadm/mdadm.conf
+# sudo mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf
+sudo sfdisk -d /dev/sda | sudo sfdisk /dev/md0
+
+# переносим систему
+sudo mount /dev/md0p1 /mnt
+sudo rsync -axu / /mnt/
+
+#chroot
+sudo mount --bind /proc /mnt/proc
+sudo mount --bind /dev /mnt/dev
+sudo mount --bind /sys /mnt/sys
+sudo mount --bind /run /mnt/run
+sudo chroot /mnt
+
+#fstab
+/ ls -l /dev/disk/by-uuid | grep md >> /etc/fstab
+/ nano -w /etc/fstab
+
+#grub
+/ update-grub
+/ cat /boot/grub/grub.cfg | grep UUID_нового_системного_раздела
+/ grub-install /dev/sdb
+/ grub-install /dev/sdс
+
+#kernel
+/ update-initramfs -u
+
+# выход из chroot
+/ exit

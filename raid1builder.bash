@@ -64,7 +64,7 @@ command -v rsync >/dev/null 2>&1 || { echo >&2 "I require rsync but it's not ins
 
 echo "Все программы установлены (mdadm, parted, rsync)"
 
-echo -n "Enter RAID level(1,2): "
+echo -n "Enter RAID level(0,1): "
 read rraidlevel
 
 echo -n "Выбран $raidlevel : "
