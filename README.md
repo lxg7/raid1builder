@@ -1,0 +1,2 @@
+# pomoyka
+Scripts for life
