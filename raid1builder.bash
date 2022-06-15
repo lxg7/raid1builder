@@ -5,16 +5,20 @@ E_NOTROOT=67 # Признак отсутствия root-привилегий.
 E_FILE_NOT_EXIST=71
 E_NOFILE=66
 
+
+function choosedisk1 {
+
+}
+
 function makeraid0 {
     echo  "Выбран RAID-0."
     echo  "В данный момент не поддерживается..."
     exit 1
-    #=====================
-    echo  -n "Будет ли текущий диск частью будущего массива?(y/n) "
-    read def_disk_in_root
+echo
+
     if def_disk_in_root == 'y'
     then
-      echo -n "Текущий диск будет вхоить в систему..."
+      
     else
       echo -n "Текущий диск не будет вхоить в систему..."
     fi
@@ -26,21 +30,29 @@ function makeraid1 {
     #echo  "В данный момент не поддерживается..."
     echo  -n "Будет ли текущий диск частью будущего массива?(y/n) "
     read def_disk_in_root
-    if def_disk_in_root == 'y'
-    then
+    
+    case "$def_disk_in_root" in
+    
+    y | Y | YES | yes | Yes)
       echo -n "Текущий диск будет вхоить в систему..."
-      disk1 = df | grep "/$" | awk '{print $1}'`
+      disk1 = `df | grep "/$" | awk '{print $1}'`
       echo "Текущий диск $disk1 выбран как первый в массиве"
-    else
+    ;;
+    
+    n | N | no | NO | No)
       echo -n "Текущий диск не будет вхоить в систему..."
       echo "Введите название нового диска1 дл массива(/dev/sdX)): "
       read disk1
       disk1_check = `disk1 | tail -c 3
       echo disk1_check
-      if [disk1_check == lsblk | grep disk1_check]
+      #if [disk1_check == lsblk | grep disk1_check]
       echo "Диск определен: $disk1"
-    fi
+    ;;
 
+    *)
+    echo -n "unknown"
+    ;;
+    esac
 
 
 }

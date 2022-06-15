@@ -28,7 +28,10 @@ sudo mdadm -D /dev/md0
 sudo su
 sudo mdadm --examine --scan >> /etc/mdadm/mdadm.conf
 # sudo mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf
-sudo sfdisk -d /dev/sda | sudo sfdisk /dev/md0
+sudo sfdisk -d /dev/sda | sudo sfdisk -f /dev/md0
+sudo mkfs.ext4 /dev/md0p1
+sudo mkswap /dev/md0p5
+
 
 # переносим систему
 sudo mount /dev/md0p1 /mnt
