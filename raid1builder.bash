@@ -7,6 +7,33 @@ E_NOFILE=66
 
 
 function choosedisk1 {
+  echo  -n "Будет ли текущий диск частью будущего массива?(y/n) "
+  read def_disk_in_root
+    
+  case "$def_disk_in_root" in
+  
+  y | Y | YES | yes | Yes)
+    echo -n "Текущий диск будет вхоить в систему..."
+    disk1 = `df | grep "/$" | awk '{print $1}'`
+    echo "Текущий диск $disk1 выбран как первый в массиве"
+    echo "Текущие параметры еще не поддерживаются..."
+    exit 1
+  ;;
+  
+  n | N | no | NO | No)
+    echo -n "Текущий диск не будет вхоить в систему..."
+    echo "Введите название нового диска1 дл массива(/dev/sdX)): "
+    read disk1
+    disk1_check = `disk1 | tail -c 3
+    echo disk1_check
+    if ["$disk1_check" == `lsblk | grep disk1_check` ]
+    echo "Диск определен: $disk1"
+  ;;
+
+  *)
+  echo -n "unknown"
+  ;;
+  esac
 
 }
 
@@ -28,31 +55,7 @@ echo
 function makeraid1 {
     echo  "Выбран RAID-1."
     #echo  "В данный момент не поддерживается..."
-    echo  -n "Будет ли текущий диск частью будущего массива?(y/n) "
-    read def_disk_in_root
     
-    case "$def_disk_in_root" in
-    
-    y | Y | YES | yes | Yes)
-      echo -n "Текущий диск будет вхоить в систему..."
-      disk1 = `df | grep "/$" | awk '{print $1}'`
-      echo "Текущий диск $disk1 выбран как первый в массиве"
-    ;;
-    
-    n | N | no | NO | No)
-      echo -n "Текущий диск не будет вхоить в систему..."
-      echo "Введите название нового диска1 дл массива(/dev/sdX)): "
-      read disk1
-      disk1_check = `disk1 | tail -c 3
-      echo disk1_check
-      #if [disk1_check == lsblk | grep disk1_check]
-      echo "Диск определен: $disk1"
-    ;;
-
-    *)
-    echo -n "unknown"
-    ;;
-    esac
 
 
 }
