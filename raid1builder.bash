@@ -71,7 +71,7 @@ parted -s $disk1 mklabel msdos
 parted -s $disk1 mkpart primary 1MiB 100%
 parted -s $disk1 set 1 raid on
 disk11=`echo "$disk1"1`
-read check 
+#read check 
 
 echo "Форматирование диска $disk2"
 
@@ -79,27 +79,27 @@ parted -s $disk2 mklabel msdos
 parted -s $disk2 mkpart primary 1MiB 100%
 parted -s $disk2 set 1 raid on
 disk21=`echo "$disk2"1`
-read check
+#read check
 
 echo;echo;echo;echo;echo
 echo "====Создание диска md0 - RAID-1 ===="
 mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk11 $disk21
 mdadm -D /dev/md0
 mdadm --examine --scan > /etc/mdadm/mdadm.conf
-read check
+#read check
 
 echo;echo;echo;echo;echo
 echo "====Разметка md0 + форматирование ===="
 sfdisk -d /dev/sda | sfdisk -f /dev/md0
 mkfs.ext4 /dev/md0p1
 mkswap /dev/md0p5
-read check
+#read check
 
 echo;echo;echo;echo;echo
 echo "====Перенос данных со старой системы===="
 mount /dev/md0p1 /mnt
-rsync -axuP / /mnt/
-read check
+rsync -axu --info=progress2 / /mnt/
+#read check
 
 echo;echo;echo;echo;echo
 echo "====Меняем fstab на raid-системе===="
@@ -110,7 +110,7 @@ sed "s/$uuidsda1/$uuidmd0p1/" -i /etc/fstab
 uuidsda5=`ls -l /dev/disk/by-uuid/ | grep sda5 | awk '{print $9}'`
 uuidmd0p5=`ls -l /dev/disk/by-uuid/ | grep md0p5 | awk '{print $9}'`
 sed "s/$uuidsda5/$uuidmd0p5/" -i /etc/fstab
-read check
+#read check
 
 echo;echo;echo;echo;echo
 echo "====chroot===="
@@ -118,7 +118,7 @@ mount --bind /proc /mnt/proc
 mount --bind /dev /mnt/dev
 mount --bind /sys /mnt/sys
 mount --bind /run /mnt/run
-read check
+#read check
 
 echo;echo;echo;echo;echo
 echo "====Обновление конфигов grub и установка на новые диски===="
@@ -132,7 +132,7 @@ echo "chroot ok"
 echo
 echo "!!!RAID готов!!!
 echo
-read check
+#read check
 reboot
 
 }
