@@ -100,7 +100,7 @@ mkswap /dev/md0p5
 echo;echo;echo;echo;echo
 echo "====Перенос данных со старой системы===="
 mount /dev/md0p1 /mnt
-rsync -axu --progress --stats / /mnt/
+rsync -axu --info=progress2 / /mnt/
 #read check
 
 echo;echo;echo;echo;echo
@@ -125,10 +125,10 @@ mount --bind /run /mnt/run
 echo;echo;echo;echo;echo
 echo "====Обновление конфигов grub и установка на новые диски===="
 # cat /boot/grub/grub.cfg | grep UUID_нового_системного_раздела
-grub-install $disk1
-grub-install $disk2
+#grub-install $disk1
+#grub-install $disk2
 echo '====Переходим в новое окружение'
-cp chroot.sh /mnt/chroot.sh
+cp chroot.sh /mnt/chroot.sh $disk1 $disk2
 chroot /mnt/ /chroot.sh
 echo "chroot ok"
 echo
