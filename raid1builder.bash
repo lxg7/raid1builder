@@ -67,24 +67,64 @@ echo;echo;echo;echo;echo
 echo "====Форматирование дисков===="
 echo "Форматирование диска $disk1"
 
-sudo parted -s $disk1 mklabel msdos
-sudo parted -s $disk1 mkpart primary 1MiB 100%
-sudo parted -s $disk1 set 1 raid on
+parted -s $disk1 mklabel msdos
+parted -s $disk1 mkpart primary 1MiB 100%
+parted -s $disk1 set 1 raid on
 disk11=`echo "$disk1"1`
 
 echo "Форматирование диска $disk2"
 
-sudo parted -s $disk2 mklabel msdos
-sudo parted -s $disk2 mkpart primary 1MiB 100%
-sudo parted -s $disk2 set 1 raid on
+parted -s $disk2 mklabel msdos
+parted -s $disk2 mkpart primary 1MiB 100%
+parted -s $disk2 set 1 raid on
 disk21=`echo "$disk2"1`
 
 echo;echo;echo;echo;echo
-echo "====Создание raid1 + перенос старой разметки диска===="
-sudo mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk1
-sudo mdadm -D /dev/md0
-sudo mdadm --examine --scan >> /etc/mdadm/mdadm.conf
-  #echo  "В данный момент не поддерживается..."
+echo "====Создание диска md0 - RAID-1 ===="
+mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk1
+mdadm -D /dev/md0
+mdadm --examine --scan >> /etc/mdadm/mdadm.conf
+
+echo;echo;echo;echo;echo
+echo "====Разметка md0 + форматирование ===="
+sfdisk -d /dev/sda | sfdisk -f /dev/md0
+mkfs.ext4 /dev/md0p1
+mkswap /dev/md0p5
+
+echo;echo;echo;echo;echo
+echo "====Перенос данных со старой системы===="
+mount /dev/md0p1 /mnt
+rsync -axuP / /mnt/
+
+echo;echo;echo;echo;echo
+echo "====Меняем fstab на raid-системе===="
+uuidsda1=`ls -l /dev/disk/by-uuid/ | grep sda1 | awk '{print $9}'`
+uuidmd0p1=`ls -l /dev/disk/by-uuid/ | grep md0p1 | awk '{print $9}'`
+sed "s*/$uuidsda1*/$uuidmd0p1*g" -i /etc/fstab
+
+uuidsda5=`ls -l /dev/disk/by-uuid/ | grep sda5 | awk '{print $9}'`
+uuidmd0p5=`ls -l /dev/disk/by-uuid/ | grep md0p5 | awk '{print $9}'`
+sed "s*/$uuidsda1*/$uuidmd0p5*g" -i /etc/fstab
+
+echo;echo;echo;echo;echo
+echo "====chroot===="
+mount --bind /proc /mnt/proc
+mount --bind /dev /mnt/dev
+mount --bind /sys /mnt/sys
+mount --bind /run /mnt/run
+chroot /mnt
+
+echo;echo;echo;echo;echo
+echo "====Обновление конфигов grub и установка на новые диски===="
+# cat /boot/grub/grub.cfg | grep UUID_нового_системного_раздела
+grub-install $disk1
+grub-install $disk2
+update-initramfs -u
+sed '8i\GRUB_RECORDFAIL_TIMEOUT=10' /etc/default/grub
+sed "s*/quiet*/quiet bootdegraded*g" -i /etc/default/grub
+update-grub
+dpkg-reconfigure -p critical mdadm
+reboot
 }
 
 function inst_req {
