@@ -118,7 +118,6 @@ mount --bind /proc /mnt/proc
 mount --bind /dev /mnt/dev
 mount --bind /sys /mnt/sys
 mount --bind /run /mnt/run
-
 read check
 
 echo;echo;echo;echo;echo
@@ -126,8 +125,13 @@ echo "====Обновление конфигов grub и установка на 
 # cat /boot/grub/grub.cfg | grep UUID_нового_системного_раздела
 grub-install $disk1
 grub-install $disk2
-chroot /mnt ./chroot.sh
+echo '====Переходим в новое окружение'
+cp chroot.sh /mnt/chroot.sh
+chroot /mnt/ /chroot.sh
 echo "chroot ok"
+echo
+echo "!!!RAID готов!!!
+echo
 read check
 reboot
 
