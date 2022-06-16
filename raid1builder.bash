@@ -83,7 +83,7 @@ read check
 
 echo;echo;echo;echo;echo
 echo "====Создание диска md0 - RAID-1 ===="
-mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk1 $disk2
+mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk11 $disk21
 mdadm -D /dev/md0
 mdadm --examine --scan > /etc/mdadm/mdadm.conf
 read check
