@@ -130,8 +130,8 @@ echo "====Обновление конфигов grub и установка на 
 #grub-install $disk1
 #grub-install $disk2
 echo '====Переходим в новое окружение'
-cp chroot.sh /mnt/chroot.sh $disk1 $disk2
-chroot /mnt/ /chroot.sh
+cp chroot.sh /mnt/chroot.sh 
+chroot /mnt/ /chroot.sh $disk1 $disk2
 echo "chroot ok"
 echo
 echo "!!!RAID готов!!!"
