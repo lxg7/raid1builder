@@ -66,6 +66,8 @@ function makeraid1 {
 echo;echo;echo;echo;echo
 echo "====Форматирование дисков===="
 echo "Форматирование диска $disk1"
+sudo mdadm --zero-superblock $disk1
+sudo mdadm --zero-superblock $disk2
 
 parted -s $disk1 mklabel msdos
 parted -s $disk1 mkpart primary 1MiB 100%
