@@ -10,109 +10,154 @@ function choosedisk1 {
   echo  -n "Будет ли текущий диск частью будущего массива?(y/n) "
   read def_disk_in_root
     
-  case "$def_disk_in_root" in
-  
-  y | Y | YES | yes | Yes)
-    echo -n "Текущий диск будет вхоить в систему..."
-    disk1 = `df | grep "/$" | awk '{print $1}'`
+  case $def_disk_in_root in
+  "y" | "Y" | "YES" | "yes" | "Yes" )
+    echo "Текущий диск будет вхоить в систему..."
+    disk1=`df | grep "/$" | awk '{print $1}'`
     echo "Текущий диск $disk1 выбран как первый в массиве"
     echo "Текущие параметры еще не поддерживаются..."
-    exit 1
+    exit 1 
   ;;
   
-  n | N | no | NO | No)
-    echo -n "Текущий диск не будет вхоить в систему..."
-    echo "Введите название нового диска1 дл массива(/dev/sdX)): "
+  "n" | "N" | "no" | "NO" | "No" )
+    echo "Текущий диск не будет вхоить в систему..."
+    echo "Введите название нового диска_1 дл массива(/dev/sdX)): "
     read disk1
-    disk1_check = `disk1 | tail -c 3
-    echo disk1_check
-    if ["$disk1_check" == `lsblk | grep disk1_check` ]
-    echo "Диск определен: $disk1"
+    disk1_check=`echo $disk1 | tail -c 4`
+    if [ $disk1_check == `lsblk | grep $disk1_check | awk '{print $1}'` ]
+    then
+      echo "Диск определен: $disk1"
+    else
+      echo "Ошибка! Нет такого диска..."
+      exit 1
+    fi
   ;;
 
-  *)
-  echo -n "unknown"
-  ;;
+  * )
+    echo -n "unknown" ;;
   esac
+}
 
+function choosedisk2 {
+  echo "Введите название нового диска_2 дл массива(/dev/sdX)): "
+  read disk2
+  disk2_check=`echo $disk2 | tail -c 4`
+  if [ $disk2_check == `lsblk | grep $disk2_check | awk '{print $1}'` ]
+  then
+    echo "Диск определен: $disk2"
+  else
+    echo "Ошибка! Нет такого диска..."
+    exit 1
+  fi
+  
 }
 
 function makeraid0 {
-    echo  "Выбран RAID-0."
-    echo  "В данный момент не поддерживается..."
+    echo "Выбран RAID-0."
+    echo "В разработке..."
     exit 1
-echo
-
-    if def_disk_in_root == 'y'
-    then
-      
-    else
-      echo -n "Текущий диск не будет вхоить в систему..."
-    fi
     #=====================
 }
 
 function makeraid1 {
-    echo  "Выбран RAID-1."
-    #echo  "В данный момент не поддерживается..."
-    
+  echo  "Выбран RAID-1."
+  choosedisk1
+  choosedisk2
+echo;echo;echo;echo;echo
+echo "====Форматирование дисков===="
+echo "Форматирование диска $disk1"
+
+sudo parted -s $disk1 mklabel msdos
+sudo parted -s $disk1 mkpart primary 1MiB 100%
+sudo parted -s $disk1 set 1 raid on
+disk11=`echo "$disk1"1`
+
+echo "Форматирование диска $disk2"
+
+sudo parted -s $disk2 mklabel msdos
+sudo parted -s $disk2 mkpart primary 1MiB 100%
+sudo parted -s $disk2 set 1 raid on
+disk21=`echo "$disk2"1`
+
+echo;echo;echo;echo;echo
+echo "====Создание raid1 + перенос старой разметки диска===="
+sudo mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk1
+sudo mdadm -D /dev/md0
+sudo mdadm --examine --scan >> /etc/mdadm/mdadm.conf
+  #echo  "В данный момент не поддерживается..."
+}
+
+function inst_req {
+  # Проверка наличия необходимых программ
+  command -v mdadm >/dev/null 2>&1 || { echo >&2 "I require mdadm but it's not installed.  Aborting."; exit 1; }
+  command -v parted >/dev/null 2>&1 || { echo >&2 "I require parted but it's not installed.  Aborting."; exit 1; }
+  command -v rsync >/dev/null 2>&1 || { echo >&2 "I require rsync but it's not installed.  Aborting."; exit 1; }
+  # command -v foo >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
+  echo "Все программы установлены (mdadm, parted, rsync)"
+
+}
+
+function root_check {
+  if [ "$UID" -ne "$ROOT_UID" ]
+  then
+    echo "Для работы сценария требуются права root."
+    exit $E_NOTROOT
+  fi
+  echo "Root - права получены"
+}
 
 
+function requirements {
+  echo "  _____            _____ _____   ____        _ _     _           "; sleep .1
+  echo " |  __ \     /\   |_   _|  __ \ |  _ \      (_) |   | |          "; sleep .1
+  echo " | |__) |   /  \    | | | |  | || |_) |_   _ _| | __| | ___ _ __ "; sleep .1
+  echo " |  _  /   / /\ \   | | | |  | ||  _ <| | | | | |/ _\` |/ _ \ '__|";sleep .1
+  echo " | | \ \  / ____ \ _| |_| |__| || |_) | |_| | | | (_| |  __/ |   "; sleep .1
+  echo " |_|  \_\/_/    \_\_____|_____/ |____/ \__,_|_|_|\__,_|\___|_|   "; sleep .1
+  echo "                            ______                               "; sleep .1
+  echo "  _             _          |______|                              "; sleep .1
+  echo " | |           | |        |____  |                               "; sleep .1
+  echo " | |__  _   _  | |_  ____ _   / /                                "; sleep .1
+  echo " | '_ \| | | | | \ \/ / _\` | / /                                 ";sleep .1
+  echo " | |_) | |_| | | |>  < (_| |/ /                                  "; sleep .1
+  echo " |_.__/ \__, | |_/_/\_\__, /_/                                   "; sleep .1
+  echo "         __/ |         __/ |                                     "; sleep .1
+  echo "        |___/         |___/                                      "; sleep .1
+  echo
+  echo "--- Для работы необохдимо:"
+  echo "---   1. Диск с MBR разметкой (разделы Авто - /home и swap)"
+  echo "---   2. Пакеты mdadm, parted, rsync"
+  echo "--- Пока работает только вариант с RAID-1 для двух новых дисков(без текущего)."
+  echo
 }
 
 
 
-if [ "$UID" -ne "$ROOT_UID" ]
-then
-	echo "Для работы сценария требуются права root."
-	exit $E_NOTROOT
-fi
-
-echo "Root - права получены"
-
-
- # Проверка наличия необходимых программ
-command -v mdadm >/dev/null 2>&1 || { echo >&2 "I require mdadm but it's not installed.  Aborting."; exit 1; }
-command -v parted >/dev/null 2>&1 || { echo >&2 "I require parted but it's not installed.  Aborting."; exit 1; }
-command -v rsync >/dev/null 2>&1 || { echo >&2 "I require rsync but it's not installed.  Aborting."; exit 1; }
-# command -v foo >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
-
-echo "Все программы установлены (mdadm, parted, rsync)"
+requirements
+root_check
+inst_req
 
 echo -n "Enter RAID level(0,1): "
 read rraidlevel
 
-echo -n "Выбран $raidlevel : "
+#echo -n "Выбран $raidlevel : "
 
 case $rraidlevel in
 
   RAID0 | raid0 | 0)
-    makeraid0
+    #makeraid0
+    echo "В разработке..."
 	exit 1
 	;;
 
   RAID1 | raid1 | 1)
     makeraid1
-	exit 1
+	exit 0
     ;;
 	
   *)
-    echo -n "unknown"
+    echo "Ошибка. Тип массива не распознан."
     ;;
 esac
 
 
-
-#echo "Введите диск, на котором стоит система"
-#read default_disk
-
-#if [ ! -f "$default_disk" ] # Проверка существования файла.
-#then
-# echo "Файл \"$default_disk\" не найден."
-# exit $E_NOFILE
-#fi
-#echo "Домашний диск определен - \"$default_disk\""
-
-#def_disk = $1
-#disk1 = $2
-#disk2 = $3
