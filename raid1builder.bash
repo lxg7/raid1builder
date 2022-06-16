@@ -130,7 +130,7 @@ cp chroot.sh /mnt/chroot.sh
 chroot /mnt/ /chroot.sh
 echo "chroot ok"
 echo
-echo "!!!RAID готов!!!
+echo "!!!RAID готов!!!"
 echo
 #read check
 reboot
