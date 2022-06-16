@@ -105,11 +105,11 @@ echo;echo;echo;echo;echo
 echo "====Меняем fstab на raid-системе===="
 uuidsda1=`ls -l /dev/disk/by-uuid/ | grep sda1 | awk '{print $9}'`
 uuidmd0p1=`ls -l /dev/disk/by-uuid/ | grep md0p1 | awk '{print $9}'`
-sed "s/$uuidsda1/$uuidmd0p1/" -i /etc/fstab
+sed "s/$uuidsda1/$uuidmd0p1/" -i /mnt/etc/fstab
 
 uuidsda5=`ls -l /dev/disk/by-uuid/ | grep sda5 | awk '{print $9}'`
 uuidmd0p5=`ls -l /dev/disk/by-uuid/ | grep md0p5 | awk '{print $9}'`
-sed "s/$uuidsda5/$uuidmd0p5/" -i /etc/fstab
+sed "s/$uuidsda5/$uuidmd0p5/" -i /mnt/etc/fstab
 #read check
 
 echo;echo;echo;echo;echo
