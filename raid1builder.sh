@@ -85,7 +85,7 @@ disk21=`echo "$disk2"1`
 
 echo;echo;echo;echo;echo
 echo "====Создание диска md0 - RAID-1 ===="
-mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk11 $disk21
+yes | mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk11 $disk21
 mdadm -D /dev/md0
 mdadm --examine --scan > /etc/mdadm/mdadm.conf
 #read check
@@ -100,7 +100,7 @@ mkswap /dev/md0p5
 echo;echo;echo;echo;echo
 echo "====Перенос данных со старой системы===="
 mount /dev/md0p1 /mnt
-rsync -axu --info=progress2 / /mnt/
+rsync -axu --progress --stats / /mnt/
 #read check
 
 echo;echo;echo;echo;echo
