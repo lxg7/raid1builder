@@ -124,6 +124,8 @@ read check
 echo;echo;echo;echo;echo
 echo "====Обновление конфигов grub и установка на новые диски===="
 # cat /boot/grub/grub.cfg | grep UUID_нового_системного_раздела
+grub-install $disk1
+grub-install $disk2
 chroot /mnt ./chroot.sh
 echo "chroot ok"
 read check
