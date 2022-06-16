@@ -109,7 +109,7 @@ sed "s/$uuidsda1/$uuidmd0p1/" -i /etc/fstab
 
 uuidsda5=`ls -l /dev/disk/by-uuid/ | grep sda5 | awk '{print $9}'`
 uuidmd0p5=`ls -l /dev/disk/by-uuid/ | grep md0p5 | awk '{print $9}'`
-sed "s/$uuidsda1/$uuidmd0p5/" -i /etc/fstab
+sed "s/$uuidsda5/$uuidmd0p5/" -i /etc/fstab
 read check
 
 echo;echo;echo;echo;echo
