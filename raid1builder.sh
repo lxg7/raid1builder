@@ -137,7 +137,6 @@ echo
 echo "!!!RAID готов!!!"
 echo
 #read check
-reboot
 
 }
 
