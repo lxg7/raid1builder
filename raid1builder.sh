@@ -87,7 +87,9 @@ echo;echo;echo;echo;echo
 echo "====Создание диска md0 - RAID-1 ===="
 yes | mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk11 $disk21
 mdadm -D /dev/md0
-mdadm --examine --scan > /etc/mdadm/mdadm.conf
+echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
+mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf
+
 #read check
 
 echo;echo;echo;echo;echo
