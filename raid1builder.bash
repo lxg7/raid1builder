@@ -118,19 +118,15 @@ mount --bind /proc /mnt/proc
 mount --bind /dev /mnt/dev
 mount --bind /sys /mnt/sys
 mount --bind /run /mnt/run
-chroot /mnt
+
 read check
 
 echo;echo;echo;echo;echo
 echo "====Обновление конфигов grub и установка на новые диски===="
 # cat /boot/grub/grub.cfg | grep UUID_нового_системного_раздела
-grub-install $disk1
-grub-install $disk2
-update-initramfs -u
-sed '8i\GRUB_RECORDFAIL_TIMEOUT=10' /etc/default/grub
-sed "s/quiet/quiet bootdegraded/" -i /etc/default/grub
-update-grub
-dpkg-reconfigure -p critical mdadm
+chroot /mnt ./chroot.sh
+echo "chroot ok"
+read check
 reboot
 
 }
