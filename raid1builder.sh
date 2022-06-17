@@ -2,11 +2,13 @@
 
 ROOT_UID=0 # Только пользователь с $UID 0 имеет привилегии root.
 E_NOTROOT=67 # Признак отсутствия root-привилегий.
-E_FILE_NOT_EXIST=71
-E_NOFILE=66
 
 
 function choosedisk1 {
+  
+  # Идет выбор первого диска для raid массива. Может быть 
+  # использован диск, на котором сейчас стоит система или новый диск.
+  
   echo  -n "Будет ли текущий диск частью будущего массива?(y/n) "
   read def_disk_in_root
     
@@ -39,6 +41,9 @@ function choosedisk1 {
 }
 
 function choosedisk2 {
+
+  # Выбор второго диска для raid массива
+
   echo "Введите название нового диска_2 дл массива(/dev/sdX)): "
   read disk2
   disk2_check=`echo $disk2 | tail -c 4`
@@ -56,57 +61,69 @@ function makeraid0 {
     echo "Выбран RAID-0."
     echo "В разработке..."
     exit 1
-    #=====================
 }
 
 function makeraid1 {
-  echo  "Выбран RAID-1."
-  choosedisk1
-  choosedisk2
-echo;echo;echo;echo;echo
+echo  "Выбран RAID-1."
+choosedisk1
+choosedisk2
+echo;echo
 echo "====Форматирование дисков===="
-echo "Форматирование диска $disk1"
-sudo mdadm --zero-superblock $disk1
-sudo mdadm --zero-superblock $disk2
+echo;echo
 
+echo "Форматирование диска $disk1"
+# форматирование средствами mdadm, создание новой разметки диска, создание раздела на весь диск, установка флага raid autodetect
+sudo mdadm --zero-superblock $disk1
 parted -s $disk1 mklabel msdos
 parted -s $disk1 mkpart primary 1MiB 100%
 parted -s $disk1 set 1 raid on
 disk11=`echo "$disk1"1`
-#read check 
+ 
 
 echo "Форматирование диска $disk2"
-
+# форматирование средствами mdadm, создание новой разметки диска, создание раздела на весь диск, установка флага raid autodetect
+sudo mdadm --zero-superblock $disk2
 parted -s $disk2 mklabel msdos
 parted -s $disk2 mkpart primary 1MiB 100%
 parted -s $disk2 set 1 raid on
 disk21=`echo "$disk2"1`
-#read check
 
-echo;echo;echo;echo;echo
+
+echo;echo
 echo "====Создание диска md0 - RAID-1 ===="
+echo;echo
+# создание массива md0 типа raid-1 из 2х устройств
 yes | mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2 $disk11 $disk21
+# статистика по массиву
 mdadm -D /dev/md0
+# правка конфига для массива
 echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
 mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf
 
-#read check
 
-echo;echo;echo;echo;echo
+
+echo;echo
 echo "====Разметка md0 + форматирование ===="
+echo;echo
+# перенос разделов старого диска на массив
 sfdisk -d /dev/sda | sfdisk -f /dev/md0
+# форматирование разделов массива в ext4 и swap 
 mkfs.ext4 /dev/md0p1
 mkswap /dev/md0p5
-#read check
 
-echo;echo;echo;echo;echo
+
+echo;echo
 echo "====Перенос данных со старой системы===="
+echo;echo
+# монтирование массива и копирование всех файлов из текущей системы на массив
 mount /dev/md0p1 /mnt
 rsync -axu --info=progress2 / /mnt/
-#read check
 
-echo;echo;echo;echo;echo
+
+echo;echo
 echo "====Меняем fstab на raid-системе===="
+echo;echo
+# замена UUID старых разделов в файле etc/fstab на новые (UUID разделов массива)
 uuidsda1=`ls -l /dev/disk/by-uuid/ | grep sda1 | awk '{print $9}'`
 uuidmd0p1=`ls -l /dev/disk/by-uuid/ | grep md0p1 | awk '{print $9}'`
 sed "s/$uuidsda1/$uuidmd0p1/" -i /mnt/etc/fstab
@@ -114,29 +131,29 @@ sed "s/$uuidsda1/$uuidmd0p1/" -i /mnt/etc/fstab
 uuidsda5=`ls -l /dev/disk/by-uuid/ | grep sda5 | awk '{print $9}'`
 uuidmd0p5=`ls -l /dev/disk/by-uuid/ | grep md0p5 | awk '{print $9}'`
 sed "s/$uuidsda5/$uuidmd0p5/" -i /mnt/etc/fstab
-#read check
+
 
 echo;echo;echo;echo;echo
 echo "====chroot===="
+# необходимо для работы в chroot
 mount --bind /proc /mnt/proc
 mount --bind /dev /mnt/dev
 mount --bind /sys /mnt/sys
 mount --bind /run /mnt/run
-#read check
+
 
 echo;echo;echo;echo;echo
 echo "====Обновление конфигов grub и установка на новые диски===="
-# cat /boot/grub/grub.cfg | grep UUID_нового_системного_раздела
-#grub-install $disk1
-#grub-install $disk2
 echo '====Переходим в новое окружение'
+# копируем скрипт chroot.sh в /mnt для того, чтобы chroot нашел этот скрипт при изменении корневого каталога
 cp chroot.sh /mnt/chroot.sh 
+# выполняем скрипт
 chroot /mnt/ /chroot.sh $disk1 $disk2
+# cat /boot/grub/grub.cfg | grep UUID_нового_системного_раздела проверка меню grub
 echo "chroot ok"
 echo
 echo "!!!RAID готов!!!"
 echo
-#read check
 
 }
 
